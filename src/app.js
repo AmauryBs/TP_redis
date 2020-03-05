@@ -16,6 +16,15 @@ mongoose.connect(database,function (err) {
         console.log('Connected to the database');
 });
 
+//redis
+const redis = require("redis");
+const client = redis.createClient();
+client.on("error", function(error) {
+  console.error(error);
+});
+
+
+
 // API CRUD
 const APIRoutes = require("./../api/routes");
 app.use(APIRoutes);

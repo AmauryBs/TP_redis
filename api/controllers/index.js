@@ -39,19 +39,33 @@ function login(req, res) {
 }
 
 function hello(req,res){
-    require('dotenv').config()
-    if(req.header('Authorization')){
-        const token = req.header('Authorization').replace('Bearer ', '')
+    const redis = require("redis");
+    const client = redis.createClient();
+    require('dotenv').config();
+    var token = null
+    if (req.header('Authorization')){
+        token = req.header('Authorization').replace('Bearer ', '');
     }
-    const jwt = require('jsonwebtoken')
+    const jwt = require('jsonwebtoken');
     try{
-        const payload = jwt.verify(token, process.env.JWT_SECRET) 
-        console.log(payload._id)
-        
-        res.send('Hello world')
+        const payload = jwt.verify(token, process.env.JWT_SECRET)
+        client.get(token, function(err, value) {
+            if (err) throw err;
+
+            if (value == null){
+                client.set(token, 1,'EX',60*10);
+                res.send('Hello world');
+            }else if(value<10){ 
+                console.log(payload._id);
+                client.incr(token, redis.print);
+                res.send('Hello world');
+            }else{
+                res.send('maximum number of request');
+        }
+    });    
     } catch(error) {
-        console.error(error.message)
-        res.send('please login first')
+        console.error(error.message);
+        res.send('please login first');
     }
     
 }
